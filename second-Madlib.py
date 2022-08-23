@@ -1,0 +1,6 @@
+adjective = input ("type here a adjective:")
+noun = input ("type here a noun:")
+verb = input ("type here a verb:")
+animal = input ("type here a type of animal:")
+print ("your mad word")
+print ("this" , adjective, noun, verb, "on the lazy brown" , "on" ,animal, )
