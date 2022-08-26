@@ -3,7 +3,7 @@ import shutil   #for copy file
 import os   # for get file size and check if file exist
 import sys  # for cli arguments
 
-if(len(sys.argv)< 4):
+if(len(sys.argv) < 4):
     print("Missing arguments! Usage is script.py")
     exit(1)
     
@@ -24,8 +24,8 @@ if(os.path.isfile(file_name)==True):
                     shutil.copyfile(src, dst)
                     print("Copied: " + src + " to " + dst)
                 
-                shutil.copyfile(file_name, file_name + "_1")
-                print("Copied: " + file_name + " to " + filename + "_1")
+            shutil.copyfile(file_name, file_name + "_1")
+            print("Copied: " + file_name + "  to " + filename + "_1")
         myfile = open(file_name, 'w')
         myfile.close()
     
