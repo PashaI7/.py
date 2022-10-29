@@ -1,10 +1,13 @@
 #При отладке кода стоит отметить, что в бесплатной версии api яндекса допускается только 50 запросов в сутки.
 import json
+from ssl import CHANNEL_BINDING_TYPES
 import telebot
 import requests as req
 from geopy import geocoders
 from os import environ
+from telegram import Bot #checking
 
+bot = telebot.Telebot('5683409932:AAFgqxF1Tt8uWFbN93uJNXvqispDo5U7v3A') #fixed
 token = environ ['5683409932:AAFgqxF1Tt8uWFbN93uJNXvqispDo5U7v3A']      #token_bot
 token_accu = environ ['oDDcB3lO1iSiAA5zvdGwWv4P8rXV5p4Q']               #token geocoders
 token_yandex = environ ['9ddc7ce6-f409-4828-bce9-c7ba2d560f9d']         #token yandex
@@ -29,9 +32,10 @@ def weather(cod_loc: str, token_accu: str):                            #код �
     dict_weather = dict()
     dict_weather['link'] = json_data[0]['MobileLink']
     dict_weather['now'] = {'temp': json_data[0]['Temperature']['Value'], 'sky': json_data[0]['IconPhrase']}
-    for i in range (len(json_data):1:):
+    for i in range (len(json_data)): #:1
         time = "after" + str(i) + 'h'    
         dict_weather[time] = {'temp': json_data[i]['Temperature']['Value'], 'sky': json_data[i]['IconPhrase']}
+    
     return dict_weather
 
 def yandex_weather (latitude, longitude, token_yandex: str):
@@ -91,6 +95,91 @@ def print_yandex_weather(dict_weather_yandex, message):
                 
     bot.send_message(message.from_user.id, f'А здесь ссылка на подробности'
                                                 f'{dict_weather_yandex["link"]}')
+
+def print_yandex_weather(dict_weather_yandex, message):
+    day = {'night', 'morning', 'aternoon', 'evening', 'fact'}
+    bot.send_message(message.from_user.id, f'Yandex says:')
+    for i in dict_weather_yandex.keys():
+        if i != 'link':
+            time_day = day[i]
+            bot.send_message(message.from_user.id, f'Temperature{time_day} {dict_weather_yandex[i]["temp"]}'
+                                                   f'in the sky {dict_weather_yandex[i]["condition"]}')
+
+    bot.send_message(message.from_user.id, f' And here we have a link for additional information '
+                                           f' {dict_weather_yandex["link"]}')
+
+def big_weather(message, city):
+    latitude, longitude = geo_pos(city)
+    cod_loc = code_location(latitude, longitude, token_accu)
+    you_weather = weather(cod_loc, token_accu)
+    print_weather(you_weather, message)
+    yandex_weather_x = yandex_weather(latitude, longitude, token_yandex)
+    print_yandex_weather(yandex_weather_x, message)
+
+def add_city(message):
+    try:
+        latitude, longitude = geo_pos(message.text.lower().split('town ')[1])
+        global cities
+        cities[message.from_user.id] = message.text.lower().split('town ')[1]
+        with open('cities.json', 'w') as f:
+            f.write(json.dumps(cities))
+        return cities, 0
+    except Exception as err:
+        return cities, 1
+@bot.message_handler(command=['start','help'])
+def send_welcome(message):
+    bot.reply_to(message, f'I am the weather bot, you arewelcome, {message.from_user.first_name}')
+
+bot.message_handler(content_types=['text'])
+def get_text_messages(message):
+    global cities
+    if message.text.lower() == 'Good afternoon' or message.text.lower() == 'Hey Wassup!!!':
+        bot.send_message(message.from_user.id,
+                                        f'Oh my dear bot {message.from_user.first_name}! Could i tell  '
+                                        f' u information about the weather! Write word "weather" and i will write in your'
+                                        f' "basic" city or you can write a name of your city ')
+    elif message.text.lower() == 'weather':
+        if message.from_user.id in cities.keys():
+            city = cities[message.from_user.id]
+            bot.send_message(message.from_user.id, f' Oh my Dear {message.from_user.first_name}!'
+                                                   f' Your city {city}')
+            big_weather(message, city)
+        else:
+            bot.send_message(message.from_user.id, f' Oh my Dear {message.from_user.first_name}!'
+                                                   f' I dont know your city! Type here please:'
+                                                   f' My city ***** and ill remember your basic city!')
+    elif message.text.lower()[:9] == 'my city':
+        cities, flag = add_city(message)
+        if flag == 0:
+            bot.send_message(message.from_user.id, f' Oh my Dear {message.from_user.first_name}!'
+                                                   f' Now i know what exavtly your location! this is'
+                                                   f' {cities[str(message.from_user.id)]}')
+        else:
+            bot.send_message(message.from_user.id, f' Oh my Dear {message.from_user.first_name}!'
+                                                   f' SMth went wrong :(')
+    else:
+        try:
+            city = message.text
+            bot.send_message(message.from_user.id, f' Hello {message.from_user.id.first_name}! Your city {city}')
+            big_weather(message, city)
+        except AttributeError as err:
+            bot.send_message(message.from_user.id, f' {message.form_user.first_name}! Dont punish me,'
+                                                       f' let me say! I dont find exactly city!'
+                                                       f' And have a error {err}, try another one city')
+bot = telebot.Telebot(token)
+
+with open('cities.json', encoding='utf-8') as f:
+    cities = json.load(f)
+
+    bot.polling(none_stop=True)
+
+
+
+
+
+
+
+
     
 
     
